@@ -1,0 +1,6 @@
+{
+  "name": "Cloud Backup",
+  "description": "Personal workspace notebook with notes, tasks, files, finance, smart tools, and cloud backup",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
