@@ -81,6 +81,9 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFinance(finance: FinanceEntity): Long
 
+    @Update
+    suspend fun updateFinance(finance: FinanceEntity)
+
     @Delete
     suspend fun deleteFinance(finance: FinanceEntity)
 
@@ -119,6 +122,9 @@ interface AppDao {
     @Query("DELETE FROM file_records WHERE id = :id")
     suspend fun deleteFileById(id: Long)
 
+    @Query("DELETE FROM file_records WHERE name = :name")
+    suspend fun deleteFileByName(name: String)
+
     // --- Settings ---
     @Query("SELECT * FROM app_settings")
     fun getAllSettings(): Flow<List<AppSettingsEntity>>
@@ -128,4 +134,14 @@ interface AppDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun setSetting(setting: AppSettingsEntity)
+
+    // --- Categories ---
+    @Query("SELECT * FROM custom_categories")
+    fun getAllCategories(): Flow<List<CategoryEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCategory(category: CategoryEntity)
+
+    @Delete
+    suspend fun deleteCategory(category: CategoryEntity)
 }

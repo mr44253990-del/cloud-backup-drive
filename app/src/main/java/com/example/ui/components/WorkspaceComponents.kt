@@ -1,7 +1,6 @@
 package com.example.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,13 +20,113 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.ui.theme.*
+import kotlinx.coroutines.delay
+
+@Composable
+fun AnimatedGlowGlassCard(
+    modifier: Modifier = Modifier,
+    shape: RoundedCornerShape = RoundedCornerShape(22.dp),
+    backgroundColor: Color = DarkSurfaceElevated,
+    glowColors: List<Color> = listOf(NeonCyan, ElectricBlue, Color(0xFF7C4DFF), NeonCyan),
+    borderWidth: Dp = 1.5.dp,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "glowBorder")
+    val angle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "glowAngle"
+    )
+
+    val clickableModifier = if (onClick != null) {
+        modifier.clip(shape).clickable { onClick() }
+    } else {
+        modifier.clip(shape)
+    }
+
+    Column(
+        modifier = clickableModifier
+            .background(backgroundColor, shape)
+            .border(
+                borderWidth,
+                Brush.sweepGradient(
+                    colors = glowColors
+                ),
+                shape
+            )
+            .padding(18.dp),
+        content = content
+    )
+}
+
+@Composable
+fun QuickCopyButton(
+    textToCopy: String,
+    label: String = "Copy",
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var isCopied by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isCopied) {
+        if (isCopied) {
+            delay(1800)
+            isCopied = false
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (isCopied) NeonEmerald.copy(alpha = 0.2f) else DarkSurface)
+            .border(
+                0.5.dp,
+                if (isCopied) NeonEmerald else DarkSurfaceBorder,
+                RoundedCornerShape(8.dp)
+            )
+            .clickable {
+                val cb = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                cb.setPrimaryClip(android.content.ClipData.newPlainText("Copied Content", textToCopy))
+                isCopied = true
+                android.widget.Toast.makeText(context, "Copied to clipboard!", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = if (isCopied) Icons.Default.Check else Icons.Outlined.ContentCopy,
+                contentDescription = label,
+                tint = if (isCopied) NeonEmerald else NeonCyan,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = if (isCopied) "Copied!" else label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isCopied) NeonEmerald else NeonCyan
+            )
+        }
+    }
+}
 
 @Composable
 fun GlassCard(
@@ -238,6 +337,7 @@ fun GradientButton(
 @Composable
 fun WorkspaceTopBar(
     userName: String,
+    userAvatarUrl: String = "",
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -245,12 +345,14 @@ fun WorkspaceTopBar(
 ) {
     Surface(
         color = DeepNavy,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -334,20 +436,49 @@ fun WorkspaceTopBar(
 
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(DarkSurfaceElevated)
-                        .border(1.dp, if (isCloudMode) NeonCyan else DarkSurfaceBorder, CircleShape)
+                        .size(40.dp)
                         .clickable { onProfileClick() }
                         .testTag("user_avatar_button"),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = userName.take(1).uppercase(),
-                        fontWeight = FontWeight.Bold,
-                        color = if (isCloudMode) NeonCyan else TextPrimary,
-                        fontSize = 14.sp
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                            .background(DarkSurfaceElevated)
+                            .border(2.dp, if (isCloudMode) NeonCyan else DarkSurfaceBorder, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        var isImageError by remember(userAvatarUrl) { mutableStateOf(false) }
+                        if (userAvatarUrl.isNotBlank() && !isImageError) {
+                            AsyncImage(
+                                model = userAvatarUrl,
+                                contentDescription = "User Avatar",
+                                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                                onError = { isImageError = true }
+                            )
+                        } else {
+                            Text(
+                                text = userName.take(1).uppercase().ifBlank { "U" },
+                                fontWeight = FontWeight.Bold,
+                                color = if (isCloudMode) NeonCyan else TextPrimary,
+                                fontSize = 15.sp
+                            )
+                        }
+                    }
+
+                    // Green/Cyan sync status dot on the bottom right
+                    if (isCloudMode) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .align(Alignment.BottomEnd)
+                                .clip(CircleShape)
+                                .background(NeonEmerald)
+                                .border(1.5.dp, DeepNavy, CircleShape)
+                        )
+                    }
                 }
             }
         }
@@ -372,6 +503,7 @@ fun WorkspaceBottomNav(
         color = DarkSurfaceGlass,
         modifier = modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .border(
                 width = 1.dp,
                 brush = Brush.verticalGradient(

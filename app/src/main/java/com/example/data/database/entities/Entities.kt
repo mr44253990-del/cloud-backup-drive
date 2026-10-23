@@ -36,7 +36,8 @@ data class TaskEntity(
     val subtasksJson: String = "[]",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
-    val syncStatus: String = "SYNCED"
+    val syncStatus: String = "SYNCED",
+    val cloudId: String? = null
 )
 
 @Entity(tableName = "finance_transactions")
@@ -49,7 +50,8 @@ data class FinanceEntity(
     val category: String = "Other", // Food, Transport, Internet, Shopping, Bills, Education, Salary, Other
     val date: Long = System.currentTimeMillis(),
     val notes: String = "",
-    val syncStatus: String = "SYNCED"
+    val syncStatus: String = "SYNCED",
+    val cloudId: String? = null
 )
 
 @Entity(tableName = "clipboard_items")
@@ -81,3 +83,12 @@ data class AppSettingsEntity(
     val key: String,
     val value: String
 )
+
+@Entity(tableName = "custom_categories")
+data class CategoryEntity(
+    @PrimaryKey
+    val name: String,
+    val colorHex: String = "#00E5FF",
+    val isCustom: Boolean = true
+)
+

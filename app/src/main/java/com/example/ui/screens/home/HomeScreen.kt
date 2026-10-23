@@ -84,10 +84,14 @@ fun HomeScreen(
 
         // 2. Cloud Status Card with Circular Ring
         item {
-            GlassCard(
+            AnimatedGlowGlassCard(
                 shape = RoundedCornerShape(24.dp),
                 backgroundColor = DarkSurfaceElevated,
-                borderColor = if (isCloudMode) ElectricBlue.copy(alpha = 0.5f) else DarkSurfaceBorder
+                glowColors = if (isCloudMode) {
+                    listOf(NeonCyan, ElectricBlue, NeonEmerald, NeonCyan)
+                } else {
+                    listOf(NeonAmber, Color(0xFF00E5FF), NeonAmber)
+                }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -271,8 +275,20 @@ fun HomeScreen(
             }
         }
 
-        items(notes.take(3)) { note ->
-            NoteQuickCard(note = note, onClick = { onNoteClick(note) })
+        if (notes.isEmpty()) {
+            item {
+                GlassCard {
+                    Text(
+                        text = "Your notebook is clean and ready. Tap + to write your first note!",
+                        fontSize = 13.sp,
+                        color = TextSecondary
+                    )
+                }
+            }
+        } else {
+            items(notes.take(3)) { note ->
+                NoteQuickCard(note = note, onClick = { onNoteClick(note) })
+            }
         }
 
         // 6. Recent Files & Drive Manifest
@@ -297,7 +313,18 @@ fun HomeScreen(
             }
         }
 
-        items(files.take(3)) { file ->
+        if (files.isEmpty()) {
+            item {
+                GlassCard {
+                    Text(
+                        text = "No files yet in Cloud Backup/. Connecting Google Drive will create your backup folder.",
+                        fontSize = 13.sp,
+                        color = TextSecondary
+                    )
+                }
+            }
+        } else {
+            items(files.take(3)) { file ->
             GlassCard(
                 shape = RoundedCornerShape(14.dp),
                 backgroundColor = DarkSurfaceGlass
@@ -334,6 +361,7 @@ fun HomeScreen(
             }
         }
     }
+}
 }
 
 @Composable

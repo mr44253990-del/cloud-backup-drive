@@ -14,7 +14,8 @@ import com.example.data.database.entities.*
         FinanceEntity::class,
         ClipboardEntity::class,
         FileRecordEntity::class,
-        AppSettingsEntity::class
+        AppSettingsEntity::class,
+        CategoryEntity::class
     ],
     version = 1,
     exportSchema = false
